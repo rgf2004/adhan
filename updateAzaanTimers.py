@@ -29,9 +29,9 @@ def parseArgs():
                         dest='method',
                         help='Method of calculation')
     parser.add_argument('--fajr-azaan-volume', type=int, dest='fajr_azaan_vol',
-                        help='Volume for fajr azaan in millibels, 1500 is loud and -30000 is quiet (default 0)')
+                        help='Volume for fajr azaan as a percent (0-100). 100 is normal (default 100)')
     parser.add_argument('--azaan-volume', type=int, dest='azaan_vol',
-                        help='Volume for azaan (other than fajr) in millibels, 1500 is loud and -30000 is quiet (default 0)')
+                        help='Volume for azaan (other than fajr) as a percent (0-100). 100 is normal (default 100)')
     return parser
 
 def mergeArgs(args):
@@ -43,6 +43,8 @@ def mergeArgs(args):
             lat, lng, method, fajr_azaan_vol, azaan_vol = f.readlines()[0].split(',')
     except:
         print('No .settings file found')
+    def clamp_percent(v):
+        return max(0, min(100, int(v)))
     # merge args
     if args.lat:
         lat = args.lat
@@ -56,17 +58,19 @@ def mergeArgs(args):
         method = args.method
     if args.fajr_azaan_vol:
         fajr_azaan_vol = args.fajr_azaan_vol
-    if fajr_azaan_vol:
-        fajr_azaan_vol = int(fajr_azaan_vol)
     if args.azaan_vol:
         azaan_vol = args.azaan_vol
+
+    if fajr_azaan_vol:
+        fajr_azaan_vol = clamp_percent(fajr_azaan_vol)
     if azaan_vol:
-        azaan_vol = int(azaan_vol)
+        azaan_vol = clamp_percent(azaan_vol)
+
     # save values
     with open(file_path, 'wt') as f:
         f.write('{},{},{},{},{}'.format(lat or '', lng or '', method or '',
-                fajr_azaan_vol or 0, azaan_vol or 0))
-    return lat or None, lng or None, method or None, fajr_azaan_vol or 0, azaan_vol or 0 
+                fajr_azaan_vol or 100, azaan_vol or 100))
+    return lat or None, lng or None, method or None, fajr_azaan_vol or 100, azaan_vol or 100 
 
 def addAzaanTime (strPrayerName, strPrayerTime, objCronTab, strCommand):
   job = objCronTab.new(command=strCommand,comment=strPrayerName)  
