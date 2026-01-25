@@ -71,9 +71,18 @@ python /home/pi/adhan/mawaqit_util.py -u your@email.com -p yourpassword nearby -
 
 # Or search mosques by name
 python /home/pi/adhan/mawaqit_util.py -u your@email.com -p yourpassword search "mosque name"
+```
 
-# Generate the JSON file using the mosque UUID from the search results
-python /home/pi/adhan/mawaqit_util.py -u your@email.com -p yourpassword generate <mosque-uuid> -o /home/pi/adhan/mawaqit.json
+The `nearby` and `search` commands will display a list of mosques with their names and UUIDs:
+```
+1. Mosque Name
+   UUID: 30872b8b-c065-4d14-bca6-8cb813dde014
+   Address: 123 Street, City
+```
+
+Use the UUID from the results to generate the JSON file:
+```bash
+python /home/pi/adhan/mawaqit_util.py -u your@email.com -p yourpassword generate 30872b8b-c065-4d14-bca6-8cb813dde014 -o /home/pi/adhan/mawaqit.json
 ```
 
 Note: You need a Mawaqit account (free) to use the API. Register at [mawaqit.net](https://mawaqit.net/).
