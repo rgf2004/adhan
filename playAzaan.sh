@@ -5,9 +5,11 @@ if [ $# -lt 1 ]; then
 fi
 
 audio_path="$1"
+MAX_PCM=32767
 vol=${2:-100}          # percent (0-100). 100 is normal.
 if [ "$vol" -lt 0 ]; then vol=0; fi
 if [ "$vol" -gt 100 ]; then vol=100; fi
+gain=$(( vol * MAX_PCM / 100 ))
 root_dir=`dirname $0`
 
 # Run before hooks
@@ -17,7 +19,7 @@ for hook in $root_dir/before-hooks.d/*; do
 done
 
 # Play Azaan audio
-mpg123 -q -g "$vol" "$audio_path"
+mpg123 -q -f "$gain" "$audio_path"
 
 # Run after hooks
 for hook in $root_dir/after-hooks.d/*; do
