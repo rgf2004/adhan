@@ -15,6 +15,7 @@ async def cmd_nearby(username, password, lat, lng):
         latitude=lat, longitude=lng
     )
     try:
+        await client.get_api_token()
         mosques = await client.all_mosques_neighborhood()
         print(f"Found {len(mosques)} nearby mosques:\n")
         for i, m in enumerate(mosques, 1):
@@ -30,6 +31,7 @@ async def cmd_search(username, password, keyword):
     """Search mosques by keyword."""
     client = AsyncMawaqitClient(username=username, password=password)
     try:
+        await client.get_api_token()
         mosques = await client.fetch_mosques_by_keyword(keyword)
         print(f"Found {len(mosques)} mosques matching '{keyword}':\n")
         for i, m in enumerate(mosques, 1):
@@ -45,6 +47,7 @@ async def cmd_generate(username, password, uuid, output):
     """Generate JSON file from mosque UUID."""
     client = AsyncMawaqitClient(username=username, password=password)
     try:
+        await client.get_api_token()
         client.mosque = uuid
         data = await client.fetch_prayer_times()
         with open(output, 'w', encoding='utf-8') as f:
