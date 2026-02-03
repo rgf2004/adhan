@@ -5,3 +5,5 @@ adhan.log
 .settings
 before-hooks.d/*.sh
 after-hooks.d/*.sh
+.env
+.env/
