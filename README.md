@@ -40,14 +40,14 @@ If everythig worked, your output will look something like this:
 11 14 * * * /home/pi/adhan/playAzaan.sh /home/pi/adhan/Adhan-Madinah.mp3 0 # rpiAdhanClockJob
 30 16 * * * /home/pi/adhan/playAzaan.sh /home/pi/adhan/Adhan-Madinah.mp3 0 # rpiAdhanClockJob
 53 17 * * * /home/pi/adhan/playAzaan.sh /home/pi/adhan/Adhan-Madinah.mp3 0 # rpiAdhanClockJob
-0 1 * * * /home/pi/adhan/updateAzaanTimers.py >> /home/pi/adhan/adhan.log 2>&1 # rpiAdhanClockJob
+15 3 * * * /home/pi/adhan/updateAzaanTimers.py >> /home/pi/adhan/adhan.log 2>&1 # rpiAdhanClockJob
 @monthly truncate -s 0 /home/pi/adhan/adhan.log 2>&1 # rpiAdhanClockJob
 Script execution finished at: 2017-01-06 21:22:31.512667
 ```
 
-If you look at the last few lines, you'll see that 5 adhan times have been scheduled. Then there is another line at the end which makes sure that at 1am every day the same script will run and calculate adhan times for that day. And lastly, there is a line to clear logs on a monthly basis so that your log file doesn't grow too big.
+If you look at the last few lines, you'll see that 5 adhan times have been scheduled. Then there is another line at the end which makes sure that at 03:15 every day the same script will run and calculate adhan times for that day. And lastly, there is a line to clear logs on a monthly basis so that your log file doesn't grow too big.
 
-Note that for later runs you do not have to supply any arguments as they are saved in `/home/pi/adhan/.settings`.
+Note that for later runs you do not have to supply any arguments as they are saved in `/home/pi/adhan/.settings` (the script will reuse those values unless you override them with new CLI args).
 
 VOILA! You're done!! Plug in your speakers and enjoy!
 
@@ -150,7 +150,7 @@ chmod u+x ./after-hooks.d/01-resume-quran-speaker.sh
 
 ## Tips:
 1. You can see your currently scheduled jobs by running `crontab -l`
-2. The output of the job that runs at 1am every night is being captured in `/home/pi/adhan/adhan.log`. This way you can keep track of all successful runs and any potential issues. This file will be truncated at midnight on the forst day of each month. To view the output type `$ cat /home/pi/adhan/adhan.log`
+2. The output of the job that runs at 03:15 every night is being captured in `/home/pi/adhan/adhan.log`. This way you can keep track of all successful runs and any potential issues. This file will be truncated at midnight on the forst day of each month. To view the output type `$ cat /home/pi/adhan/adhan.log`
 
 ## Credits
 I have made modifications / bug fixes but I've used the following as starting point:
