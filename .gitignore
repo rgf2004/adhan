@@ -8,3 +8,4 @@ after-hooks.d/*.sh
 .env
 .env/
 .venv/
+settings.json
