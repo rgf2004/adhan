@@ -1,0 +1,22 @@
+{
+  "general": {
+    "mode": "calculated",
+    "location": {
+      "lat": 30.0444,
+      "lng": 31.2357
+    },
+    "method": "MWL",
+    "mawaqit_file": null,
+    "log_file": "adhan.log",
+    "update_time": "03:15",
+    "default_audio": "Adhan-Madinah.mp3",
+    "default_volume": 100
+  },
+  "prayers": {
+    "fajr": { "audio": "Adhan-fajr.mp3", "volume": 100, "enabled": true },
+    "dhuhr": { "audio": "Adhan-Madinah.mp3", "volume": 100, "enabled": true },
+    "asr": { "audio": "Adhan-Madinah.mp3", "volume": 100, "enabled": true },
+    "maghrib": { "audio": "Adhan-Madinah.mp3", "volume": 100, "enabled": true },
+    "isha": { "audio": "Adhan-Madinah.mp3", "volume": 100, "enabled": true }
+  }
+}

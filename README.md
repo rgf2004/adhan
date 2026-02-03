@@ -8,6 +8,15 @@ This projects uses a python script which automatically calculates [adhan](https:
 2. Speakers
 3. Auxiliary audio cable
 4. `mpg123` is installed. ```sudo apt install mpg123``` ( the replacement of the old omxplayer tool)
+5. (Optional) Python virtual environment if you want isolated dependencies.
+
+## Python environment (optional, recommended)
+```bash
+cd /home/pi/adhan
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
 
 ## Instructions
 1. Install git: Go to raspberry pi terminal (command line interface) and install `git`
@@ -20,36 +29,73 @@ This projects uses a python script which automatically calculates [adhan](https:
 Run this command:
 
 ```bash
-$ /home/pi/adhan/updateAzaanTimers.py --lat <YOUR_LAT> --lng <YOUR_LNG> --method <METHOD>
+$ ./updateAzaanTimers.py --config ./settings.json
 ```
 
-Replace the arguments above with your location information and calculation method:
-* Set the latitude and longitude so it can calculate accurate prayer times for that location.
-* Set adhan time [calculation method](http://praytimes.org/manual#Set_Calculation_Method).
+Before running, open `/home/pi/adhan/settings.json` and update the `general.location` latitude/longitude and `general.method` (for calculated mode), or switch to `mode: "mawaqit"` and set `general.mawaqit_file`.
 
-If everythig worked, your output will look something like this:
+If everything worked, your output will look something like this:
 ```
-20 60 Egypt 0 0
 05:51
 11:52
 14:11
 16:30
 17:53
-51 5 * * * /home/pi/adhan/playAzaan.sh /home/pi/adhan/Adhan-fajr.mp3 0 # rpiAdhanClockJob
-52 11 * * * /home/pi/adhan/playAzaan.sh /home/pi/adhan/Adhan-Madinah.mp3 0 # rpiAdhanClockJob
-11 14 * * * /home/pi/adhan/playAzaan.sh /home/pi/adhan/Adhan-Madinah.mp3 0 # rpiAdhanClockJob
-30 16 * * * /home/pi/adhan/playAzaan.sh /home/pi/adhan/Adhan-Madinah.mp3 0 # rpiAdhanClockJob
-53 17 * * * /home/pi/adhan/playAzaan.sh /home/pi/adhan/Adhan-Madinah.mp3 0 # rpiAdhanClockJob
-15 3 * * * /home/pi/adhan/updateAzaanTimers.py >> /home/pi/adhan/adhan.log 2>&1 # rpiAdhanClockJob
+51 5 * * * /home/pi/adhan/playAzaan.sh /home/pi/adhan/Adhan-fajr.mp3 100 # rpiAdhanClockJob
+52 11 * * * /home/pi/adhan/playAzaan.sh /home/pi/adhan/Adhan-Madinah.mp3 100 # rpiAdhanClockJob
+11 14 * * * /home/pi/adhan/playAzaan.sh /home/pi/adhan/Adhan-Madinah.mp3 100 # rpiAdhanClockJob
+30 16 * * * /home/pi/adhan/playAzaan.sh /home/pi/adhan/Adhan-Madinah.mp3 100 # rpiAdhanClockJob
+53 17 * * * /home/pi/adhan/playAzaan.sh /home/pi/adhan/Adhan-Madinah.mp3 100 # rpiAdhanClockJob
+15 3 * * * /home/pi/adhan/updateAzaanTimers.py --config /home/pi/adhan/settings.json >> /home/pi/adhan/adhan.log 2>&1 # rpiAdhanClockJob
 @monthly truncate -s 0 /home/pi/adhan/adhan.log 2>&1 # rpiAdhanClockJob
 Script execution finished at: 2017-01-06 21:22:31.512667
 ```
 
 If you look at the last few lines, you'll see that 5 adhan times have been scheduled. Then there is another line at the end which makes sure that at 03:15 every day the same script will run and calculate adhan times for that day. And lastly, there is a line to clear logs on a monthly basis so that your log file doesn't grow too big.
 
-Note that for later runs you do not have to supply any arguments as they are saved in `/home/pi/adhan/.settings` (the script will reuse those values unless you override them with new CLI args).
+Note that for later runs you can omit `--config`; it defaults to `./settings.json` and the script reads from it every time.
 
 VOILA! You're done!! Plug in your speakers and enjoy!
+
+## Configuration (`settings.json`)
+This repo ships a default `settings.json`. The script requires the file to exist and reads it every run.
+
+Example:
+```json
+{
+  "general": {
+    "mode": "calculated",
+    "location": { "lat": 30.345621, "lng": 60.512126 },
+    "method": "MWL",
+    "mawaqit_file": null,
+    "log_file": "adhan.log",
+    "update_time": "03:15",
+    "default_audio": "Adhan-Madinah.mp3",
+    "default_volume": 100
+  },
+  "prayers": {
+    "fajr": { "audio": "Adhan-fajr.mp3", "volume": 100, "enabled": true },
+    "dhuhr": { "audio": "Adhan-Madinah.mp3", "volume": 100, "enabled": true },
+    "asr": { "audio": "Adhan-Madinah.mp3", "volume": 100, "enabled": true },
+    "maghrib": { "audio": "Adhan-Madinah.mp3", "volume": 100, "enabled": true },
+    "isha": { "audio": "Adhan-Madinah.mp3", "volume": 100, "enabled": true }
+  }
+}
+```
+
+Attribute notes:
+* `general.mode`: `calculated` or `mawaqit`.
+* `general.location.lat` / `general.location.lng`: required when `mode` is `calculated`.
+* `general.method`: required when `mode` is `calculated`. Allowed values: `MWL`, `ISNA`, `Egypt`, `Makkah`, `Karachi`, `Tehran`, `Jafari`.
+* `general.mawaqit_file`: required when `mode` is `mawaqit`.
+* `general.update_time`: daily refresh time in `HH:MM` (24-hour) for recalculating/syncing.
+* `general.log_file`: output log path (relative to repo or absolute).
+* `general.default_audio` / `general.default_volume`: defaults used for any prayer missing its own audio/volume.
+* `prayers.<name>`: one of `fajr`, `dhuhr`, `asr`, `maghrib`, `isha`.
+* `prayers.<name>.audio`: audio file path (relative to repo or absolute).
+* `prayers.<name>.volume`: percent `0-100`.
+* `prayers.<name>.enabled`: set `false` to skip that prayer.
+* Cron jobs are installed for the current user running the script (not hardcoded to `pi`).
 
 ## Alternative: Using Mawaqit Prayer Times
 
@@ -90,20 +136,16 @@ Note: You need a Mawaqit account (free) to use the API. Register at [mawaqit.net
 
 ### Step 2: Run the adhan clock with mawaqit
 
+Update your `./settings.json` to set `general.mode` to `mawaqit` and point `general.mawaqit_file` to the JSON file, then run:
 ```bash
-/home/pi/adhan/updateAzaanTimers.py --mawaqit /home/pi/adhan/mawaqit.json
+./updateAzaanTimers.py --config ./settings.json
 ```
 
 The mawaqit JSON file contains a full year calendar, so you only need to regenerate it once a year.
 
-For subsequent runs, just run without arguments (settings are saved):
+For subsequent runs, just run with the same config (or omit `--config` to use `./settings.json`):
 ```bash
-/home/pi/adhan/updateAzaanTimers.py
-```
-
-To switch back to calculated times:
-```bash
-/home/pi/adhan/updateAzaanTimers.py --lat <YOUR_LAT> --lng <YOUR_LNG> --method <METHOD>
+./updateAzaanTimers.py --config ./settings.json
 ```
 
 Please see the [manual](http://praytimes.org/manual) for advanced configuration instructions. 
