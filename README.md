@@ -28,11 +28,17 @@ pip install -r requirements.txt
 ## Run it for the first time
 Run this command:
 
+First, copy the template to your local settings file:
+```bash
+$ cp ./settings.example.json ./settings.json
+```
+
+Then run the scheduler:
 ```bash
 $ ./updateAzaanTimers.py --config ./settings.json
 ```
 
-Before running, open `/home/pi/adhan/settings.json` and update the `general.location` latitude/longitude and `general.method` (for calculated mode), or switch to `mode: "mawaqit"` and set `general.mawaqit_file`.
+Before running, open `./settings.json` and update the `general.location` latitude/longitude and `general.method` (for calculated mode), or switch to `mode: "mawaqit"` and set `general.mawaqit_file`.
 
 If everything worked, your output will look something like this:
 ```
@@ -58,9 +64,9 @@ Note that for later runs you can omit `--config`; it defaults to `./settings.jso
 VOILA! You're done!! Plug in your speakers and enjoy!
 
 ## Configuration (`settings.json`)
-This repo ships a default `settings.json`. The script requires the file to exist and reads it every run.
+This repo ships `settings.example.json`. Copy it to `settings.json` for your local configuration (your local file is ignored by git so it won’t be overwritten on pulls). The script requires the file to exist and reads it every run.
 
-Example:
+Example (`settings.json`):
 ```json
 {
   "general": {
