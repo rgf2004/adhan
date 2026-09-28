@@ -9,3 +9,8 @@ after-hooks.d/*.sh
 .env/
 .venv/
 settings.json
+settings.json.bak
+uploads/
+mawaqit_files/
+__pycache__/
+

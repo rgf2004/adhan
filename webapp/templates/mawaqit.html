@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}Mawaqit – Adhan Clock Admin{% endblock %}
+{% block content %}
+
+{% if error %}
+  <section class="card error-card"><p>{{ error }}</p></section>
+{% endif %}
+
+<section class="card">
+  <h2>Mawaqit account</h2>
+  <p class="hint" style="margin-top: -0.5rem; margin-bottom: 1rem;">Used only for the action you run below — never saved to disk.</p>
+  <div class="form-grid">
+    <div class="field">
+      <label for="mw-username">Username</label>
+      <input type="text" id="mw-username" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="mw-password">Password</label>
+      <input type="password" id="mw-password" autocomplete="off">
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Search mosques nearby</h2>
+  <form method="post" action="{{ url_for('mawaqit_nearby') }}" class="mawaqit-form form-grid">
+    <input type="hidden" name="username">
+    <input type="hidden" name="password">
+    <div class="field">
+      <label for="nearby-lat">Latitude</label>
+      <input type="text" id="nearby-lat" name="lat" required>
+    </div>
+    <div class="field">
+      <label for="nearby-lng">Longitude</label>
+      <input type="text" id="nearby-lng" name="lng" required>
+    </div>
+    <div class="field field-submit">
+      <label>&nbsp;</label>
+      <button type="submit">Search Nearby</button>
+    </div>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Search mosques by name</h2>
+  <form method="post" action="{{ url_for('mawaqit_search') }}" class="mawaqit-form form-grid">
+    <input type="hidden" name="username">
+    <input type="hidden" name="password">
+    <div class="field">
+      <label for="search-keyword">Keyword</label>
+      <input type="text" id="search-keyword" name="keyword" required>
+    </div>
+    <div class="field field-submit">
+      <label>&nbsp;</label>
+      <button type="submit">Search</button>
+    </div>
+  </form>
+</section>
+
+{% if action in ('nearby', 'search') and results %}
+<section class="card">
+  <h2>Results</h2>
+  <table class="mosques">
+    <thead><tr><th>Name</th><th>UUID</th><th>Address</th><th></th></tr></thead>
+    <tbody>
+      {% for m in results %}
+      <tr>
+        <td>{{ m.name }}</td>
+        <td><code>{{ m.uuid }}</code></td>
+        <td>{{ m.localisation }}</td>
+        <td>
+          <form method="post" action="{{ url_for('mawaqit_generate') }}" class="mawaqit-form inline">
+            <input type="hidden" name="uuid" value="{{ m.uuid }}">
+            <input type="hidden" name="mosque_name" value="{{ m.name }}">
+            <input type="hidden" name="username">
+            <input type="hidden" name="password">
+            <button type="submit" class="secondary">Generate calendar</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+{% if action == 'generate' and generated_path %}
+<section class="card">
+  <h2>Calendar generated</h2>
+  <p>Saved to <code>{{ generated_path }}</code>.</p>
+  <form method="get" action="{{ url_for('settings_view') }}">
+    <button type="submit">Go to Settings to use this calendar</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

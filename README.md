@@ -200,6 +200,53 @@ chmod u+x ./after-hooks.d/01-resume-quran-speaker.sh
 1. You can see your currently scheduled jobs by running `crontab -l`
 2. The output of the job that runs at 03:15 every night is being captured in `/home/pi/adhan/adhan.log`. This way you can keep track of all successful runs and any potential issues. This file will be truncated at midnight on the forst day of each month. To view the output type `$ cat /home/pi/adhan/adhan.log`
 
+## Admin web page
+
+Instead of SSH-ing in every time you want to tweak something, you can run a small local web app
+that lets you edit `settings.json`, see today's prayer times and installed cron jobs, upload/test-play
+audio files, and search/generate Mawaqit calendars — all from a browser on your home network.
+
+### Setup
+
+Install the extra dependency (already listed in `requirements.txt`):
+```bash
+pip install -r requirements.txt
+```
+
+Run it directly to try it out:
+```bash
+python3 webapp/app.py
+```
+Then open `http://<your-pi-ip>:8080` from any device on your LAN.
+
+### Run it as a persistent service
+
+Copy the provided systemd unit and enable it so it starts on boot and restarts if it crashes:
+```bash
+sudo cp systemd/adhan-webapp.service /etc/systemd/system/adhan-webapp.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now adhan-webapp
+```
+
+**Important:** edit the `User=` line in `/etc/systemd/system/adhan-webapp.service` (and
+`WorkingDirectory=`/`ExecStart=` if your install path differs from `/home/pi/adhan`) so it matches
+the OS user whose crontab actually runs the adhan jobs. `updateAzaanTimers.py` schedules jobs for
+whichever user runs it (`getpass.getuser()`), so if the web app ran as a different user it would
+end up editing a different crontab than the one actually playing adhans.
+
+The admin web app itself never plays audio and isn't on any schedule — it only edits `settings.json`
+and (on "Save & Apply") re-invokes `updateAzaanTimers.py` to regenerate the cron jobs. If it crashes
+or you leave it stopped, scheduled adhans keep playing exactly as before; only the admin UI becomes
+unavailable.
+
+### Security model — read this before exposing it
+
+There is **no login** on this page, by design, on the assumption your home LAN is trusted. It binds
+to `0.0.0.0:8080` (all interfaces), so **any device on your local network can view and change your
+prayer settings, upload audio files, or trigger test playback** — there's no authentication layer to
+stop them. Don't port-forward this port to the internet. If that tradeoff doesn't work for your
+network, put it behind a reverse proxy with auth, or don't run it.
+
 ## Credits
 I have made modifications / bug fixes but I've used the following as starting point:
 * Python code to calculate adhan times: http://praytimes.org/code/ 
