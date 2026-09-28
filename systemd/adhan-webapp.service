@@ -1,0 +1,21 @@
+[Unit]
+Description=Adhan Clock Admin Web App
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# IMPORTANT: this must be the SAME user whose crontab runs the adhan jobs
+# (updateAzaanTimers.py uses the current OS user via getpass.getuser()).
+# If this doesn't match, the web app will regenerate a different user's
+# crontab than the one actually playing adhans.
+User=pi
+WorkingDirectory=/home/pi/adhan
+Environment=ADHAN_HOST=0.0.0.0
+Environment=ADHAN_PORT=8080
+ExecStart=/home/pi/adhan/.venv/bin/python3 /home/pi/adhan/webapp/app.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

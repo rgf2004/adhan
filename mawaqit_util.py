@@ -23,6 +23,7 @@ async def cmd_nearby(username, password, lat, lng):
             print(f"   UUID: {m['uuid']}")
             print(f"   Address: {m.get('localisation', 'N/A')}")
             print()
+        return mosques
     finally:
         await client.close()
 
@@ -39,6 +40,7 @@ async def cmd_search(username, password, keyword):
             print(f"   UUID: {m['uuid']}")
             print(f"   Address: {m.get('localisation', 'N/A')}")
             print()
+        return mosques
     finally:
         await client.close()
 
@@ -53,6 +55,7 @@ async def cmd_generate(username, password, uuid, output):
         with open(output, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
         print(f"Generated: {output}")
+        return output
     finally:
         await client.close()
 

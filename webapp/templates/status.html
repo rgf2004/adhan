@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}Status – Adhan Clock Admin{% endblock %}
+{% block content %}
+<section class="card">
+  <h2>Today's Prayer Times {% if mode %}<span class="badge">{{ mode }}</span>{% endif %}</h2>
+  {% if times_error %}
+    <p class="error">{{ times_error }}</p>
+  {% else %}
+    <table class="times">
+      <tbody>
+        <tr><th>Fajr</th><td>{{ times.fajr }}</td></tr>
+        <tr><th>Dhuhr</th><td>{{ times.dhuhr }}</td></tr>
+        <tr><th>Asr</th><td>{{ times.asr }}</td></tr>
+        <tr><th>Maghrib</th><td>{{ times.maghrib }}</td></tr>
+        <tr><th>Isha</th><td>{{ times.isha }}</td></tr>
+      </tbody>
+    </table>
+  {% endif %}
+</section>
+
+<section class="card">
+  <h2>Installed Cron Jobs</h2>
+  {% if cron_jobs %}
+    <table class="jobs">
+      <thead><tr><th>Kind</th><th>Schedule</th><th>Command</th></tr></thead>
+      <tbody>
+        {% for job in cron_jobs %}
+        <tr>
+          <td>{{ job.kind }}</td>
+          <td><code>{{ job.schedule }}</code></td>
+          <td class="cmd">{{ job.command }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No cron jobs installed yet. Go to Settings and apply a configuration.</p>
+  {% endif %}
+</section>
+
+<section class="card">
+  <h2>Recent Log Output</h2>
+  {% if log_lines %}
+    <pre class="log">{{ log_lines | join('\n') }}</pre>
+  {% else %}
+    <p>No log output yet.</p>
+  {% endif %}
+</section>
+{% endblock %}

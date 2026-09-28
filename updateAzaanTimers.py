@@ -14,11 +14,9 @@ root_dir = dirname(abspath(__file__))
 sys.path.insert(0, pathjoin(root_dir, 'crontab'))
 
 from praytimes import PrayTimes
-PT = PrayTimes()
-
 from crontab import CronTab
-cron_user = getpass.getuser()
-system_cron = CronTab(user=cron_user)
+
+strJobComment = 'rpiAdhanClockJob'
 
 # HELPER FUNCTIONS
 # ---------------------------------
@@ -102,7 +100,58 @@ def get_times_from_mawaqit(mawaqit_file):
         'isha': day_times[5]
     }
 
-def addAzaanTime (strPrayerName, strPrayerTime, objCronTab, strCommand):
+def compute_prayer_times(general, pt):
+    """Compute today's prayer times from a `general` settings dict, using the given PrayTimes instance.
+
+    Dispatches on `general['mode']` ('calculated' or 'mawaqit'). Exits the process with an
+    error message if required fields are missing (same behavior as historical inline code).
+    """
+    mode = general.get('mode', 'calculated')
+    if mode == 'mawaqit':
+        mawaqit_file = general.get('mawaqit_file')
+        if not mawaqit_file:
+            print('Error: general.mawaqit_file is required when mode is "mawaqit"')
+            sys.exit(1)
+        return get_times_from_mawaqit(mawaqit_file)
+
+    location = general.get('location', {}) or {}
+    lat = location.get('lat')
+    lng = location.get('lng')
+    method = general.get('method')
+    if lat is None or lng is None or not method:
+        print('Error: general.location.lat, general.location.lng, and general.method are required when mode is "calculated"')
+        sys.exit(1)
+    pt.setMethod(method)
+    utcOffset = -(time.timezone / 3600)
+    isDst = time.localtime().tm_isdst
+    now = datetime.datetime.now()
+    return pt.getTimes((now.year, now.month, now.day), (lat, lng), utcOffset, isDst)
+
+def get_prayer_config(name, prayers_cfg, default_audio, default_volume):
+    cfg = prayers_cfg.get(name, {}) or {}
+    enabled = cfg.get('enabled', True)
+    audio = cfg.get('audio', default_audio)
+    if audio is None:
+        audio = default_audio
+    volume_value = cfg.get('volume', default_volume)
+    if volume_value is None:
+        volume_value = default_volume
+    volume = clamp_percent(volume_value, f'prayers.{name}.volume')
+    return enabled, audio, volume
+
+def build_play_command(audio, volume, log_file_path):
+    audio_path = resolve_path(audio) or audio
+    if not audio_path:
+        print('Error: audio file path is required for prayer playback')
+        sys.exit(1)
+    return '{} {} {} >> {} 2>&1'.format(
+        shlex.quote(pathjoin(root_dir, 'playAzaan.sh')),
+        shlex.quote(audio_path),
+        shlex.quote(str(volume)),
+        shlex.quote(log_file_path),
+    )
+
+def addAzaanTime(strPrayerName, strPrayerTime, objCronTab, strCommand):
   job = objCronTab.new(command=strCommand,comment=strPrayerName)
   timeArr = strPrayerTime.split(':')
   hour = timeArr[0]
@@ -132,108 +181,75 @@ def addClearLogsCronJob (objCronTab, strCommand):
 # ---------------------------------
 # HELPER FUNCTIONS END
 
-# Parse arguments
-parser = parseArgs()
-args = parser.parse_args()
 
-config, config_path = load_config(args.config_path)
-general = config.get('general', {})
-prayers_cfg = config.get('prayers', {})
+def main():
+    cron_user = getpass.getuser()
+    system_cron = CronTab(user=cron_user)
 
-mode = general.get('mode', 'calculated')
-if mode not in ('calculated', 'mawaqit'):
-    print('Error: general.mode must be "calculated" or "mawaqit"')
-    sys.exit(1)
+    # Parse arguments
+    parser = parseArgs()
+    args = parser.parse_args()
 
-default_audio = general.get('default_audio', 'Adhan-Madinah.mp3')
-default_volume = clamp_percent(general.get('default_volume', 100), 'general.default_volume')
-log_file = general.get('log_file', 'adhan.log')
-update_time = general.get('update_time', '03:15')
+    config, config_path = load_config(args.config_path)
+    general = config.get('general', {})
+    prayers_cfg = config.get('prayers', {})
 
-try:
-    update_hour, update_minute = parse_time_hhmm(update_time, 'general.update_time')
-except ValueError as e:
-    print(f'Error: {e}')
-    sys.exit(1)
-
-log_file_path = resolve_path(log_file) or pathjoin(root_dir, 'adhan.log')
-
-
-def get_prayer_config(name):
-    cfg = prayers_cfg.get(name, {}) or {}
-    enabled = cfg.get('enabled', True)
-    audio = cfg.get('audio', default_audio)
-    if audio is None:
-        audio = default_audio
-    volume_value = cfg.get('volume', default_volume)
-    if volume_value is None:
-        volume_value = default_volume
-    volume = clamp_percent(volume_value, f'prayers.{name}.volume')
-    return enabled, audio, volume
-
-def build_play_command(audio, volume):
-    audio_path = resolve_path(audio) or audio
-    if not audio_path:
-        print('Error: audio file path is required for prayer playback')
+    mode = general.get('mode', 'calculated')
+    if mode not in ('calculated', 'mawaqit'):
+        print('Error: general.mode must be "calculated" or "mawaqit"')
         sys.exit(1)
-    return '{} {} {} >> {} 2>&1'.format(
-        shlex.quote(pathjoin(root_dir, 'playAzaan.sh')),
-        shlex.quote(audio_path),
-        shlex.quote(str(volume)),
+
+    default_audio = general.get('default_audio', 'Adhan-Madinah.mp3')
+    default_volume = clamp_percent(general.get('default_volume', 100), 'general.default_volume')
+    log_file = general.get('log_file', 'adhan.log')
+    update_time = general.get('update_time', '03:15')
+
+    try:
+        update_hour, update_minute = parse_time_hhmm(update_time, 'general.update_time')
+    except ValueError as e:
+        print(f'Error: {e}')
+        sys.exit(1)
+
+    log_file_path = resolve_path(log_file) or pathjoin(root_dir, 'adhan.log')
+
+    now = datetime.datetime.now()
+
+    # Determine mode and get prayer times
+    pt = PrayTimes()
+    times = compute_prayer_times(general, pt)
+
+    strUpdateCommand = '{}/updateAzaanTimers.py --config {} >> {} 2>&1'.format(
+        root_dir,
+        shlex.quote(config_path),
         shlex.quote(log_file_path),
     )
+    strClearLogsCommand = 'truncate -s 0 {} 2>&1'.format(shlex.quote(log_file_path))
 
-now = datetime.datetime.now()
+    # Remove existing jobs created by this script
+    system_cron.remove_all(comment=strJobComment)
+    print(times['fajr'])
+    print(times['dhuhr'])
+    print(times['asr'])
+    print(times['maghrib'])
+    print(times['isha'])
 
-# Determine mode and get prayer times
-if mode == 'mawaqit':
-    mawaqit_file = general.get('mawaqit_file')
-    if not mawaqit_file:
-        print('Error: general.mawaqit_file is required when mode is "mawaqit"')
-        sys.exit(1)
-    times = get_times_from_mawaqit(mawaqit_file)
-else:
-    location = general.get('location', {}) or {}
-    lat = location.get('lat')
-    lng = location.get('lng')
-    method = general.get('method')
-    if lat is None or lng is None or not method:
-        print('Error: general.location.lat, general.location.lng, and general.method are required when mode is "calculated"')
-        sys.exit(1)
-    PT.setMethod(method)
-    utcOffset = -(time.timezone/3600)
-    isDst = time.localtime().tm_isdst
-    times = PT.getTimes((now.year, now.month, now.day), (lat, lng), utcOffset, isDst)
+    # Add times to crontab
+    for prayer_key in ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']:
+        enabled, audio, volume = get_prayer_config(prayer_key, prayers_cfg, default_audio, default_volume)
+        if not enabled:
+            continue
+        play_cmd = build_play_command(audio, volume, log_file_path)
+        addAzaanTime(prayer_key, times[prayer_key], system_cron, play_cmd)
 
-strUpdateCommand = '{}/updateAzaanTimers.py --config {} >> {} 2>&1'.format(
-    root_dir,
-    shlex.quote(config_path),
-    shlex.quote(log_file_path),
-)
-strClearLogsCommand = 'truncate -s 0 {} 2>&1'.format(shlex.quote(log_file_path))
-strJobComment = 'rpiAdhanClockJob'
+    # Run this script again overnight
+    addUpdateCronJob(system_cron, strUpdateCommand, update_hour, update_minute)
 
-# Remove existing jobs created by this script
-system_cron.remove_all(comment=strJobComment)
-print(times['fajr'])
-print(times['dhuhr'])
-print(times['asr'])
-print(times['maghrib'])
-print(times['isha'])
+    # Clear the logs every month
+    addClearLogsCronJob(system_cron, strClearLogsCommand)
 
-# Add times to crontab
-for prayer_key in ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']:
-    enabled, audio, volume = get_prayer_config(prayer_key)
-    if not enabled:
-        continue
-    play_cmd = build_play_command(audio, volume)
-    addAzaanTime(prayer_key, times[prayer_key], system_cron, play_cmd)
+    system_cron.write_to_user(user=cron_user)
+    print('Script execution finished at: ' + str(now))
 
-# Run this script again overnight
-addUpdateCronJob(system_cron, strUpdateCommand, update_hour, update_minute)
 
-# Clear the logs every month
-addClearLogsCronJob(system_cron, strClearLogsCommand)
-
-system_cron.write_to_user(user=cron_user)
-print('Script execution finished at: ' + str(now))
+if __name__ == '__main__':
+    main()

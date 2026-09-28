@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}Settings – Adhan Clock Admin{% endblock %}
+{% block content %}
+{% set general = settings.general or {} %}
+{% set prayers = settings.prayers or {} %}
+{% set location = general.location or {} %}
+
+{% if error %}
+  <section class="card error-card">
+    <h2>Could not apply settings</h2>
+    <pre>{{ error }}</pre>
+  </section>
+{% endif %}
+
+<form method="post" class="card">
+  <h2>General</h2>
+
+  <div class="field" style="max-width: 260px">
+    <label for="mode-select">Mode</label>
+    <select name="mode" id="mode-select">
+      <option value="calculated" {% if general.mode == 'calculated' %}selected{% endif %}>Calculated</option>
+      <option value="mawaqit" {% if general.mode == 'mawaqit' %}selected{% endif %}>Mawaqit</option>
+    </select>
+  </div>
+
+  <fieldset class="mode-fieldset" data-mode="calculated">
+    <legend>Calculated mode</legend>
+    <div class="form-grid">
+      <div class="field">
+        <label for="lat">Latitude</label>
+        <input type="text" id="lat" name="lat" value="{{ location.lat if location.lat is not none else '' }}">
+      </div>
+      <div class="field">
+        <label for="lng">Longitude</label>
+        <input type="text" id="lng" name="lng" value="{{ location.lng if location.lng is not none else '' }}">
+      </div>
+      <div class="field">
+        <label for="method">Method</label>
+        <select name="method" id="method">
+          {% for m in methods %}
+          <option value="{{ m }}" {% if general.method == m %}selected{% endif %}>{{ m }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset class="mode-fieldset" data-mode="mawaqit">
+    <legend>Mawaqit mode</legend>
+    <div class="field">
+      <label for="mawaqit_file">Mawaqit calendar file</label>
+      <input type="text" id="mawaqit_file" name="mawaqit_file" value="{{ general.mawaqit_file or '' }}" placeholder="relative to repo, or generated from the Mawaqit page">
+    </div>
+  </fieldset>
+
+  <div class="form-grid">
+    <div class="field">
+      <label for="update_time">Daily update time (HH:MM)</label>
+      <input type="text" id="update_time" name="update_time" value="{{ general.update_time or '03:15' }}">
+    </div>
+    <div class="field">
+      <label for="log_file">Log file</label>
+      <input type="text" id="log_file" name="log_file" value="{{ general.log_file or 'adhan.log' }}">
+    </div>
+    <div class="field">
+      <label for="default_audio">Default audio</label>
+      <input type="text" id="default_audio" name="default_audio" value="{{ general.default_audio or 'Adhan-Madinah.mp3' }}">
+    </div>
+    <div class="field">
+      <label for="default_volume">Default volume (0-100)</label>
+      <input type="number" id="default_volume" min="0" max="100" name="default_volume" value="{{ general.default_volume if general.default_volume is not none else 100 }}">
+    </div>
+  </div>
+
+  <h2>Prayers</h2>
+  <table class="prayers">
+    <thead><tr><th>Prayer</th><th>Audio</th><th>Volume</th><th>Enabled</th></tr></thead>
+    <tbody>
+      {% for key in prayer_keys %}
+      {% set p = prayers.get(key, {}) %}
+      <tr>
+        <td>{{ key | capitalize }}</td>
+        <td>
+          <select name="prayers.{{ key }}.audio">
+            {% for a in audio_files %}
+            <option value="{{ a.rel_path }}" {% if p.audio == a.rel_path or p.audio == a.name %}selected{% endif %}>{{ a.name }} ({{ a.source }})</option>
+            {% endfor %}
+          </select>
+        </td>
+        <td><input type="number" min="0" max="100" name="prayers.{{ key }}.volume" value="{{ p.volume if p.volume is not none else 100 }}"></td>
+        <td><input type="checkbox" name="prayers.{{ key }}.enabled" {% if p.get('enabled', True) %}checked{% endif %}></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <p style="margin-top: 1.5rem"><button type="submit">Save &amp; Apply</button></p>
+</form>
+{% endblock %}
