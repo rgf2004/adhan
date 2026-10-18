@@ -166,6 +166,7 @@ try:
 except (TypeError, ValueError):
     print(f'Error: general.prepray_reminder.minutes_before must be a non-negative integer: {reminder_minutes}')
     sys.exit(1)
+reminder_run_hooks = bool(reminder_cfg.get('run_hooks', False))
 reminder_volume = clamp_percent(reminder_cfg.get('volume', default_volume), 'general.prepray_reminder.volume')
 
 log_file_path = resolve_path(log_file) or pathjoin(root_dir, 'adhan.log')
@@ -188,15 +189,16 @@ def minutes_before(strTime, minutes):
     shifted = datetime.datetime(2000, 1, 1, hour, minute) - datetime.timedelta(minutes=minutes)
     return shifted.strftime('%H:%M')
 
-def build_play_command(audio, volume):
+def build_play_command(audio, volume, run_hooks=True):
     audio_path = resolve_path(audio) or audio
     if not audio_path:
         print('Error: audio file path is required for prayer playback')
         sys.exit(1)
-    return '{} {} {} >> {} 2>&1'.format(
+    return '{} {} {}{} >> {} 2>&1'.format(
         shlex.quote(pathjoin(root_dir, 'playAzaan.sh')),
         shlex.quote(audio_path),
         shlex.quote(str(volume)),
+        '' if run_hooks else ' --no-hooks',
         shlex.quote(log_file_path),
     )
 
@@ -251,7 +253,7 @@ for prayer_key in ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']:
         if not reminder_audio:
             print(f'Warning: prayers.{prayer_key}.prepray_reminder is true but general.prepray_reminder.audio is not set; skipping')
             continue
-        reminder_cmd = build_play_command(reminder_audio, reminder_volume)
+        reminder_cmd = build_play_command(reminder_audio, reminder_volume, reminder_run_hooks)
         addAzaanTime(prayer_key + '-prepray-reminder', minutes_before(times[prayer_key], reminder_minutes), system_cron, reminder_cmd)
 
 # Run this script again overnight

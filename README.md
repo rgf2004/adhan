@@ -78,7 +78,7 @@ Example (`settings.json`):
     "update_time": "03:15",
     "default_audio": "Adhan-Madinah.mp3",
     "default_volume": 100,
-    "prepray_reminder": { "audio": "prepray_reminder.mp3", "minutes_before": 15, "volume": 100 }
+    "prepray_reminder": { "audio": "prepray_reminder.mp3", "minutes_before": 15, "volume": 100, "run_hooks": false }
   },
   "prayers": {
     "fajr": { "audio": "Adhan-fajr.mp3", "volume": 100, "enabled": true, "prepray_reminder": true },
@@ -106,6 +106,7 @@ Attribute notes:
 * `general.prepray_reminder.audio`: MP3 played for the reminder (required if any prayer enables it; otherwise that reminder is skipped with a warning).
 * `general.prepray_reminder.minutes_before`: how long before the prayer the reminder plays (default `15`).
 * `general.prepray_reminder.volume`: percent `0-100` (defaults to `general.default_volume`).
+* `general.prepray_reminder.run_hooks`: run the before/after hooks around the reminder too (default `false`).
 * Cron jobs are installed for the current user running the script (not hardcoded to `pi`).
 
 ## Alternative: Using Mawaqit Prayer Times
