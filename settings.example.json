@@ -14,7 +14,8 @@
     "prepray_reminder": {
       "audio": "prepray_reminder.mp3",
       "minutes_before": 15,
-      "volume": 100
+      "volume": 100,
+      "run_hooks": false
     }
   },
   "prayers": {
