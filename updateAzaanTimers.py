@@ -156,6 +156,18 @@ except ValueError as e:
     print(f'Error: {e}')
     sys.exit(1)
 
+reminder_cfg = general.get('prepray_reminder', {}) or {}
+reminder_audio = reminder_cfg.get('audio')
+reminder_minutes = reminder_cfg.get('minutes_before', 15)
+try:
+    reminder_minutes = int(reminder_minutes)
+    if reminder_minutes < 0:
+        raise ValueError
+except (TypeError, ValueError):
+    print(f'Error: general.prepray_reminder.minutes_before must be a non-negative integer: {reminder_minutes}')
+    sys.exit(1)
+reminder_volume = clamp_percent(reminder_cfg.get('volume', default_volume), 'general.prepray_reminder.volume')
+
 log_file_path = resolve_path(log_file) or pathjoin(root_dir, 'adhan.log')
 
 
@@ -170,6 +182,11 @@ def get_prayer_config(name):
         volume_value = default_volume
     volume = clamp_percent(volume_value, f'prayers.{name}.volume')
     return enabled, audio, volume
+
+def minutes_before(strTime, minutes):
+    hour, minute = parse_time_hhmm(strTime, 'prayer time')
+    shifted = datetime.datetime(2000, 1, 1, hour, minute) - datetime.timedelta(minutes=minutes)
+    return shifted.strftime('%H:%M')
 
 def build_play_command(audio, volume):
     audio_path = resolve_path(audio) or audio
@@ -228,6 +245,14 @@ for prayer_key in ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']:
         continue
     play_cmd = build_play_command(audio, volume)
     addAzaanTime(prayer_key, times[prayer_key], system_cron, play_cmd)
+
+    # Optional reminder played shortly before the prayer
+    if (prayers_cfg.get(prayer_key, {}) or {}).get('prepray_reminder', False):
+        if not reminder_audio:
+            print(f'Warning: prayers.{prayer_key}.prepray_reminder is true but general.prepray_reminder.audio is not set; skipping')
+            continue
+        reminder_cmd = build_play_command(reminder_audio, reminder_volume)
+        addAzaanTime(prayer_key + '-prepray-reminder', minutes_before(times[prayer_key], reminder_minutes), system_cron, reminder_cmd)
 
 # Run this script again overnight
 addUpdateCronJob(system_cron, strUpdateCommand, update_hour, update_minute)

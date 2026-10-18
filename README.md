@@ -77,10 +77,11 @@ Example (`settings.json`):
     "log_file": "adhan.log",
     "update_time": "03:15",
     "default_audio": "Adhan-Madinah.mp3",
-    "default_volume": 100
+    "default_volume": 100,
+    "prepray_reminder": { "audio": "prepray_reminder.mp3", "minutes_before": 15, "volume": 100 }
   },
   "prayers": {
-    "fajr": { "audio": "Adhan-fajr.mp3", "volume": 100, "enabled": true },
+    "fajr": { "audio": "Adhan-fajr.mp3", "volume": 100, "enabled": true, "prepray_reminder": true },
     "dhuhr": { "audio": "Adhan-Madinah.mp3", "volume": 100, "enabled": true },
     "asr": { "audio": "Adhan-Madinah.mp3", "volume": 100, "enabled": true },
     "maghrib": { "audio": "Adhan-Madinah.mp3", "volume": 100, "enabled": true },
@@ -101,6 +102,10 @@ Attribute notes:
 * `prayers.<name>.audio`: audio file path (relative to repo or absolute).
 * `prayers.<name>.volume`: percent `0-100`.
 * `prayers.<name>.enabled`: set `false` to skip that prayer.
+* `prayers.<name>.prepray_reminder`: `true` to also play a reminder before this prayer (default `false`).
+* `general.prepray_reminder.audio`: MP3 played for the reminder (required if any prayer enables it; otherwise that reminder is skipped with a warning).
+* `general.prepray_reminder.minutes_before`: how long before the prayer the reminder plays (default `15`).
+* `general.prepray_reminder.volume`: percent `0-100` (defaults to `general.default_volume`).
 * Cron jobs are installed for the current user running the script (not hardcoded to `pi`).
 
 ## Alternative: Using Mawaqit Prayer Times

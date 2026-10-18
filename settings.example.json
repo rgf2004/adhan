@@ -10,13 +10,18 @@
     "log_file": "adhan.log",
     "update_time": "03:15",
     "default_audio": "Adhan-Madinah.mp3",
-    "default_volume": 100
+    "default_volume": 100,
+    "prepray_reminder": {
+      "audio": "prepray_reminder.mp3",
+      "minutes_before": 15,
+      "volume": 100
+    }
   },
   "prayers": {
-    "fajr": { "audio": "Adhan-fajr.mp3", "volume": 100, "enabled": true },
-    "dhuhr": { "audio": "Adhan-Madinah.mp3", "volume": 100, "enabled": true },
-    "asr": { "audio": "Adhan-Madinah.mp3", "volume": 100, "enabled": true },
-    "maghrib": { "audio": "Adhan-Madinah.mp3", "volume": 100, "enabled": true },
-    "isha": { "audio": "Adhan-Madinah.mp3", "volume": 100, "enabled": true }
+    "fajr": { "audio": "Adhan-fajr.mp3", "volume": 100, "enabled": true, "prepray_reminder": false },
+    "dhuhr": { "audio": "Adhan-Madinah.mp3", "volume": 100, "enabled": true, "prepray_reminder": false },
+    "asr": { "audio": "Adhan-Madinah.mp3", "volume": 100, "enabled": true, "prepray_reminder": false },
+    "maghrib": { "audio": "Adhan-Madinah.mp3", "volume": 100, "enabled": true, "prepray_reminder": false },
+    "isha": { "audio": "Adhan-Madinah.mp3", "volume": 100, "enabled": true, "prepray_reminder": false }
   }
 }
